@@ -1,8 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public enum Direction
+﻿public enum Direction
 {
     foreward,  // z+ direction
     right,  // +x direction
@@ -10,4 +6,4 @@ public enum Direction
     left,   // -x direction
     up,     // +y direction
     down    // -y direction
-}
+};

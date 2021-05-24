@@ -52,7 +52,7 @@ public static class Chunk
             return chunkData.blocks[index];
         }
 
-        throw new Exception("Need to ask World for appropiate chunk");
+        return chunkData.worldReference.GetBlockFromChunkCoordinates(chunkData, chunkData.worldPosition.x + x, chunkData.worldPosition.y + y, chunkData.worldPosition.z + z);
     }
 
     public static void SetBlock(ChunkData chunkData, Vector3Int localPosition, BlockType block)
@@ -87,8 +87,20 @@ public static class Chunk
     {
         MeshData meshData = new MeshData(true);
 
-        //fill later
+        LoopThroughTheBlocks(chunkData, (x, y, z) => meshData = BlockHelper.GetMeshData(chunkData, x, y, z, meshData, chunkData.blocks[GetIndexFromPosition(chunkData, x, y, z)]));
+
 
         return meshData;
+    }
+
+    internal static Vector3Int ChunkPositionFromBlockCoords(World world, int x, int y, int z)
+    {
+        Vector3Int pos = new Vector3Int
+        {
+            x = Mathf.FloorToInt(x / (float)world.chunkSize) * world.chunkSize,
+            y = Mathf.FloorToInt(y / (float)world.chunkHeight) * world.chunkHeight,
+            z = Mathf.FloorToInt(z / (float)world.chunkSize) * world.chunkSize
+        };
+        return pos;
     }
 }
