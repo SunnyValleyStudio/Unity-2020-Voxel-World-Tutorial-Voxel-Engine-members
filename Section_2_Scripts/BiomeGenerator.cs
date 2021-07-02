@@ -9,6 +9,8 @@ public class BiomeGenerator : MonoBehaviour
 
     public NoiseSettings biomeNoiseSettings;
 
+    public BlockLayerHandler startLayerHandler;
+
     public ChunkData ProcessChunkColumn(ChunkData data, int x, int z, Vector2Int mapSeedOffset)
     {
         biomeNoiseSettings.worldOffset = mapSeedOffset;
@@ -16,29 +18,30 @@ public class BiomeGenerator : MonoBehaviour
 
         for (int y = 0; y < data.chunkHeight; y++)
         {
-            BlockType voxelType = BlockType.Dirt;
-            if (y > groundPosition)
-            {
-                if (y < waterThreshold)
-                {
-                    voxelType = BlockType.Water;
-                }
-                else
-                {
-                    voxelType = BlockType.Air;
-                }
+            startLayerHandler.Handle(data, x, y, z, groundPosition, mapSeedOffset);
+            //BlockType voxelType = BlockType.Dirt;
+            //if (y > groundPosition)
+            //{
+            //    if (y < waterThreshold)
+            //    {
+            //        voxelType = BlockType.Water;
+            //    }
+            //    else
+            //    {
+            //        voxelType = BlockType.Air;
+            //    }
 
-            }
-            else if (y == groundPosition && y < waterThreshold)
-            {
-                voxelType = BlockType.Sand;
-            }
-            else if (y == groundPosition)
-            {
-                voxelType = BlockType.Grass_Dirt;
-            }
+            //}
+            //else if (y == groundPosition && y < waterThreshold)
+            //{
+            //    voxelType = BlockType.Sand;
+            //}
+            //else if (y == groundPosition)
+            //{
+            //    voxelType = BlockType.Grass_Dirt;
+            //}
 
-            Chunk.SetBlock(data, new Vector3Int(x, y, z), voxelType);
+            //Chunk.SetBlock(data, new Vector3Int(x, y, z), voxelType);
         }
         return data;
     }
