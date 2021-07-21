@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class World : MonoBehaviour
 {
@@ -13,8 +14,10 @@ public class World : MonoBehaviour
     public TerrainGenerator terrainGenerator;
     public Vector2Int mapSeedOffset;
 
-    Dictionary<Vector3Int, ChunkData> chunkDataDictionary = new Dictionary<Vector3Int, ChunkData>();
-    Dictionary<Vector3Int, ChunkRenderer> chunkDictionary = new Dictionary<Vector3Int, ChunkRenderer>();
+    public Dictionary<Vector3Int, ChunkData> chunkDataDictionary = new Dictionary<Vector3Int, ChunkData>();
+    public Dictionary<Vector3Int, ChunkRenderer> chunkDictionary = new Dictionary<Vector3Int, ChunkRenderer>();
+
+    public UnityEvent OnWorldCreated, OnNewChunksGenerated;
 
     public void GenerateWorld()
     {
@@ -47,9 +50,16 @@ public class World : MonoBehaviour
             chunkRenderer.UpdateChunk(meshData);
 
         }
+        OnWorldCreated?.Invoke();
     }
 
-        private void GenerateVoxels(ChunkData data)
+    internal void LoadAdditionalChunksRequest(GameObject player)
+    {
+        Debug.Log("Load more chunks");
+        OnNewChunksGenerated?.Invoke();
+    }
+
+    private void GenerateVoxels(ChunkData data)
     {
         
     }
