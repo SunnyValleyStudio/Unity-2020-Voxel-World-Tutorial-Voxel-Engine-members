@@ -8,6 +8,7 @@ public class World : MonoBehaviour
 {
     public int mapSizeInChunks = 6;
     public int chunkSize = 16, chunkHeight = 100;
+    public int chunkDrawingRange = 8;
 
     public GameObject chunkPrefab;
 
@@ -42,20 +43,29 @@ public class World : MonoBehaviour
         //chunkDictionary.Clear();
 
         WorldGenerationData worldGenerationData = GetPosisionsThatPlayerSees(Vector3Int.zero);
-        for (int x = 0; x < mapSizeInChunks; x++)
-        {
-            for (int z = 0; z < mapSizeInChunks; z++)
-            {
 
-                ChunkData data = new ChunkData(chunkSize, chunkHeight, this, new Vector3Int(x * chunkSize, 0, z * chunkSize));
-                //GenerateVoxels(data);
-                ChunkData newData = terrainGenerator.GenerateChunkData(data, mapSeedOffset);
-                worldData.chunkDataDictionary.Add(newData.worldPosition, newData);
-            }
+        //for (int x = 0; x < mapSizeInChunks; x++)
+        //{
+        //    for (int z = 0; z < mapSizeInChunks; z++)
+        //    {
+
+        //        ChunkData data = new ChunkData(chunkSize, chunkHeight, this, new Vector3Int(x * chunkSize, 0, z * chunkSize));
+        //        //GenerateVoxels(data);
+        //        ChunkData newData = terrainGenerator.GenerateChunkData(data, mapSeedOffset);
+        //        worldData.chunkDataDictionary.Add(newData.worldPosition, newData);
+        //    }
+        //}
+
+        foreach (var pos in worldGenerationData.chunkDataPositionsToCreate)
+        {
+            ChunkData data = new ChunkData(chunkSize, chunkHeight, this, pos);
+            ChunkData newData = terrainGenerator.GenerateChunkData(data, mapSeedOffset);
+            worldData.chunkDataDictionary.Add(pos, newData);
         }
 
-        foreach (ChunkData data in worldData.chunkDataDictionary.Values)
+        foreach (var pos in worldGenerationData.chunkPositionsToCreate)
         {
+            ChunkData data = worldData.chunkDataDictionary[pos];
             MeshData meshData = Chunk.GetChunkMeshData(data);
             GameObject chunkObject = Instantiate(chunkPrefab, data.worldPosition, Quaternion.identity);
             ChunkRenderer chunkRenderer = chunkObject.GetComponent<ChunkRenderer>();
@@ -64,6 +74,18 @@ public class World : MonoBehaviour
             chunkRenderer.UpdateChunk(meshData);
 
         }
+
+        //foreach (ChunkData data in worldData.chunkDataDictionary.Values)
+        //{
+        //    MeshData meshData = Chunk.GetChunkMeshData(data);
+        //    GameObject chunkObject = Instantiate(chunkPrefab, data.worldPosition, Quaternion.identity);
+        //    ChunkRenderer chunkRenderer = chunkObject.GetComponent<ChunkRenderer>();
+        //    worldData.chunkDictionary.Add(data.worldPosition, chunkRenderer);
+        //    chunkRenderer.InitializeChunk(data);
+        //    chunkRenderer.UpdateChunk(meshData);
+
+        //}
+
         OnWorldCreated?.Invoke();
     }
 
