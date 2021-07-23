@@ -35,26 +35,23 @@ public class World : MonoBehaviour
 
     public void GenerateWorld()
     {
-        //chunkDataDictionary.Clear();
-        //foreach (ChunkRenderer chunk in chunkDictionary.Values)
-        //{
-        //    Destroy(chunk.gameObject);
-        //}
-        //chunkDictionary.Clear();
+        GenerateWorld(Vector3Int.zero);
+    }
 
-        WorldGenerationData worldGenerationData = GetPosisionsThatPlayerSees(Vector3Int.zero);
+    private void GenerateWorld(Vector3Int position)
+    {
 
-        //for (int x = 0; x < mapSizeInChunks; x++)
-        //{
-        //    for (int z = 0; z < mapSizeInChunks; z++)
-        //    {
+        WorldGenerationData worldGenerationData = GetPositionsThatPlayerSees(position);
 
-        //        ChunkData data = new ChunkData(chunkSize, chunkHeight, this, new Vector3Int(x * chunkSize, 0, z * chunkSize));
-        //        //GenerateVoxels(data);
-        //        ChunkData newData = terrainGenerator.GenerateChunkData(data, mapSeedOffset);
-        //        worldData.chunkDataDictionary.Add(newData.worldPosition, newData);
-        //    }
-        //}
+        foreach (Vector3Int pos in worldGenerationData.chunkPositionsToRemove)
+        {
+            WorldDataHelper.RemoveChunk(this, pos);
+        }
+
+        foreach (Vector3Int pos in worldGenerationData.chunkDataToRemove)
+        {
+            WorldDataHelper.RemoveChunkData(this, pos);
+        }
 
         foreach (var pos in worldGenerationData.chunkDataPositionsToCreate)
         {
@@ -89,7 +86,12 @@ public class World : MonoBehaviour
         OnWorldCreated?.Invoke();
     }
 
-    private WorldGenerationData GetPosisionsThatPlayerSees(Vector3Int playerPosition)
+    internal void RemoveChunk(ChunkRenderer chunk)
+    {
+        chunk.gameObject.SetActive(false);
+    }
+
+    private WorldGenerationData GetPositionsThatPlayerSees(Vector3Int playerPosition)
     {
         List<Vector3Int> allChunkPositionsNeeded = WorldDataHelper.GetChunkPositionsAroundPlayer(this, playerPosition);
         List<Vector3Int> allChunkDataPositionsNeeded = WorldDataHelper.GetDataPositionsAroundPlayer(this, playerPosition);
@@ -97,12 +99,15 @@ public class World : MonoBehaviour
         List<Vector3Int> chunkPositionsToCreate = WorldDataHelper.SelectPositonsToCreate(worldData, allChunkPositionsNeeded, playerPosition);
         List<Vector3Int> chunkDataPositionsToCreate = WorldDataHelper.SelectDataPositonsToCreate(worldData, allChunkDataPositionsNeeded, playerPosition);
 
+        List<Vector3Int> chunkPositionsToRemove = WorldDataHelper.GetUnnededChunks(worldData, allChunkPositionsNeeded);
+        List<Vector3Int> chunkDataToRemove = WorldDataHelper.GetUnnededData(worldData, allChunkDataPositionsNeeded);
+
         WorldGenerationData data = new WorldGenerationData
         {
             chunkPositionsToCreate = chunkPositionsToCreate,
             chunkDataPositionsToCreate = chunkDataPositionsToCreate,
-            chunkPositionsToRemove = new List<Vector3Int>(),
-            chunkDataToRemove = new List<Vector3Int>(),
+            chunkPositionsToRemove = chunkPositionsToRemove,
+            chunkDataToRemove = chunkDataToRemove,
             chunkPositionsToUpdate = new List<Vector3Int>()
         };
         return data;
@@ -112,12 +117,8 @@ public class World : MonoBehaviour
     internal void LoadAdditionalChunksRequest(GameObject player)
     {
         Debug.Log("Load more chunks");
+        GenerateWorld(Vector3Int.RoundToInt(player.transform.position));
         OnNewChunksGenerated?.Invoke();
-    }
-
-    private void GenerateVoxels(ChunkData data)
-    {
-        
     }
 
     internal BlockType GetBlockFromChunkCoordinates(ChunkData chunkData, int x, int y, int z)
