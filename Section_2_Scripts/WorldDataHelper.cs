@@ -92,6 +92,27 @@ public static class WorldDataHelper
         return chunkDataPositionsToCreate;
     }
 
+    internal static void SetBlock(World worldReference, Vector3Int pos, BlockType blockType)
+    {
+        ChunkData chunkData = GetChunkData(worldReference, pos);
+        if (chunkData != null)
+        {
+            Vector3Int localPosition = Chunk.GetBlockInChunkCoordinates(chunkData, pos);
+            Chunk.SetBlock(chunkData, localPosition, blockType);
+        }
+    }
+
+    private static ChunkData GetChunkData(World worldReference, Vector3Int pos)
+    {
+        Vector3Int chunkPosition = ChunkPositionFromBlockCoords(worldReference, pos);
+
+        ChunkData containerChunk = null;
+
+        worldReference.worldData.chunkDataDictionary.TryGetValue(chunkPosition, out containerChunk);
+
+        return containerChunk;
+    }
+
     internal static List<Vector3Int> GetUnnededData(World.WorldData worldData, List<Vector3Int> allChunkDataPositionsNeeded)
     {
         return worldData.chunkDataDictionary.Keys

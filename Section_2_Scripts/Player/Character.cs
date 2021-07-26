@@ -22,12 +22,15 @@ public class Character : MonoBehaviour
 
     bool isWaiting = false;
 
+    public World world;
+
     private void Awake()
     {
         if (mainCamera == null)
             mainCamera = Camera.main;
         playerInput = GetComponent<PlayerInput>();
         playerMovement = GetComponent<PlayerMovement>();
+        world = FindObjectOfType<World>();
     }
 
     private void Start()
@@ -78,8 +81,18 @@ public class Character : MonoBehaviour
 
     private void HandleMouseClick()
     {
+        Ray playerRay = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
+        RaycastHit hit;
+        if (Physics.Raycast(playerRay, out hit, interactionRayLength, groundMask))
+        {
+            ModifyTerrain(hit);
+        }
 
+    }
 
+    private void ModifyTerrain(RaycastHit hit)
+    {
+        world.SetBlock(hit, BlockType.Air);
     }
 
 
