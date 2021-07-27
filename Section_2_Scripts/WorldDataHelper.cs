@@ -29,17 +29,17 @@ public static class WorldDataHelper
             {
                 Vector3Int chunkPos = ChunkPositionFromBlockCoords(world, new Vector3Int(x, 0, z));
                 chunkPositionsToCreate.Add(chunkPos);
-                //if (x >= playerPosition.x - world.chunkSize
-                //    && x <= playerPosition.x + world.chunkSize
-                //    && z >= playerPosition.z - world.chunkSize
-                //    && z <= playerPosition.z + world.chunkSize)
-                //{
-                //    for (int y = -world.chunkHeight; y >= playerPosition.y - world.chunkHeight * 2; y -= world.chunkHeight)
-                //    {
-                //        chunkPos = ChunkPositionFromBlockCoords(world, new Vector3Int(x, y, z));
-                //        chunkPositionsToCreate.Add(chunkPos);
-                //    }
-                //}
+                if (x >= playerPosition.x - world.chunkSize
+                    && x <= playerPosition.x + world.chunkSize
+                    && z >= playerPosition.z - world.chunkSize
+                    && z <= playerPosition.z + world.chunkSize)
+                {
+                    for (int y = -world.chunkHeight; y >= playerPosition.y - world.chunkHeight * 2; y -= world.chunkHeight)
+                    {
+                        chunkPos = ChunkPositionFromBlockCoords(world, new Vector3Int(x, y, z));
+                        chunkPositionsToCreate.Add(chunkPos);
+                    }
+                }
             }
         }
 
@@ -75,21 +75,28 @@ public static class WorldDataHelper
             {
                 Vector3Int chunkPos = ChunkPositionFromBlockCoords(world, new Vector3Int(x, 0, z));
                 chunkDataPositionsToCreate.Add(chunkPos);
-                //if (x >= playerPosition.x - world.chunkSize
-                //    && x <= playerPosition.x + world.chunkSize
-                //    && z >= playerPosition.z - world.chunkSize
-                //    && z <= playerPosition.z + world.chunkSize)
-                //{
-                //    for (int y = -world.chunkHeight; y >= playerPosition.y - world.chunkHeight * 2; y -= world.chunkHeight)
-                //    {
-                //        chunkPos = ChunkPositionFromBlockCoords(world, new Vector3Int(x, y, z));
-                //        chunkDataPositionsToCreate.Add(chunkPos);
-                //    }
-                //}
+                if (x >= playerPosition.x - world.chunkSize
+                    && x <= playerPosition.x + world.chunkSize
+                    && z >= playerPosition.z - world.chunkSize
+                    && z <= playerPosition.z + world.chunkSize)
+                {
+                    for (int y = -world.chunkHeight; y >= playerPosition.y - world.chunkHeight * 2; y -= world.chunkHeight)
+                    {
+                        chunkPos = ChunkPositionFromBlockCoords(world, new Vector3Int(x, y, z));
+                        chunkDataPositionsToCreate.Add(chunkPos);
+                    }
+                }
             }
         }
 
         return chunkDataPositionsToCreate;
+    }
+
+    internal static ChunkRenderer GetChunk(World worldReference, Vector3Int worldPosition)
+    {
+        if (worldReference.worldData.chunkDictionary.ContainsKey(worldPosition))
+            return worldReference.worldData.chunkDictionary[worldPosition];
+        return null;
     }
 
     internal static void SetBlock(World worldReference, Vector3Int pos, BlockType blockType)
@@ -102,7 +109,7 @@ public static class WorldDataHelper
         }
     }
 
-    private static ChunkData GetChunkData(World worldReference, Vector3Int pos)
+    public static ChunkData GetChunkData(World worldReference, Vector3Int pos)
     {
         Vector3Int chunkPosition = ChunkPositionFromBlockCoords(worldReference, pos);
 
