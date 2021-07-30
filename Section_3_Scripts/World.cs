@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -35,43 +36,15 @@ public class World : MonoBehaviour
         };
     }
 
-    public void GenerateWorld()
+    public async void GenerateWorld()
     {
-        //GenerateWorld(Vector3Int.zero);
-        AsyncTest();
-        Debug.Log("Press \"LIKE\" on this video");
+        await GenerateWorld(Vector3Int.zero);
     }
 
-    private async void AsyncTest()
-    {
-        StartCoroutine(AsyncCoroutine());
-        int value = await TestTask();
-        Debug.Log("Task returned " + value);
-        StopAllCoroutines();
-        Debug.Log("Finished generation");
-
-    }
-
-    IEnumerator AsyncCoroutine()
-    {
-        yield return new WaitForSeconds(0.5f);
-        Debug.Log("Playing game " + Time.time);
-        StartCoroutine(AsyncCoroutine());
-    }
-
-    private async Task<int> TestTask()
-    {
-        await Task.Delay(2000);
-        return await Task.Run(() => 
-        {
-            return 10;
-        });
-    }
-
-    private void GenerateWorld(Vector3Int position)
+    private async Task GenerateWorld(Vector3Int position)
     {
 
-        WorldGenerationData worldGenerationData = GetPositionsThatPlayerSees(position);
+        WorldGenerationData worldGenerationData = await Task.Run(() => GetPositionsThatPlayerSees(position));
 
         foreach (Vector3Int pos in worldGenerationData.chunkPositionsToRemove)
         {
@@ -83,11 +56,13 @@ public class World : MonoBehaviour
             WorldDataHelper.RemoveChunkData(this, pos);
         }
 
-        foreach (var pos in worldGenerationData.chunkDataPositionsToCreate)
+
+        ConcurrentDictionary<Vector3Int, ChunkData> dataDictionary 
+            = await CalculateWorldChunkData(worldGenerationData.chunkDataPositionsToCreate);
+
+        foreach (var calculatedData in dataDictionary)
         {
-            ChunkData data = new ChunkData(chunkSize, chunkHeight, this, pos);
-            ChunkData newData = terrainGenerator.GenerateChunkData(data, mapSeedOffset);
-            worldData.chunkDataDictionary.Add(pos, newData);
+            worldData.chunkDataDictionary.Add(calculatedData.Key, calculatedData.Value);
         }
 
         Dictionary<Vector3Int, MeshData> meshDataDictionary = new Dictionary<Vector3Int, MeshData>();
@@ -100,6 +75,25 @@ public class World : MonoBehaviour
         }
 
         StartCoroutine(ChunkCreationCoroutine(meshDataDictionary));
+    }
+
+    private Task<ConcurrentDictionary<Vector3Int, ChunkData>> CalculateWorldChunkData(List<Vector3Int> chunkDataPositionsToCreate)
+    {
+        ConcurrentDictionary<Vector3Int, ChunkData> dictionary = new ConcurrentDictionary<Vector3Int, ChunkData>();
+
+        return Task.Run(() => 
+        {
+            foreach (Vector3Int pos in chunkDataPositionsToCreate)
+            {
+                ChunkData data = new ChunkData(chunkSize, chunkHeight, this, pos);
+                ChunkData newData = terrainGenerator.GenerateChunkData(data, mapSeedOffset);
+                dictionary.TryAdd(pos, newData);
+            }
+            return dictionary;
+        }
+        );
+        
+        
     }
 
     IEnumerator ChunkCreationCoroutine(Dictionary<Vector3Int, MeshData> meshDataDictionary) 
