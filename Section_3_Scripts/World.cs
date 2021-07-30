@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -36,7 +37,35 @@ public class World : MonoBehaviour
 
     public void GenerateWorld()
     {
-        GenerateWorld(Vector3Int.zero);
+        //GenerateWorld(Vector3Int.zero);
+        AsyncTest();
+        Debug.Log("Press \"LIKE\" on this video");
+    }
+
+    private async void AsyncTest()
+    {
+        StartCoroutine(AsyncCoroutine());
+        int value = await TestTask();
+        Debug.Log("Task returned " + value);
+        StopAllCoroutines();
+        Debug.Log("Finished generation");
+
+    }
+
+    IEnumerator AsyncCoroutine()
+    {
+        yield return new WaitForSeconds(0.5f);
+        Debug.Log("Playing game " + Time.time);
+        StartCoroutine(AsyncCoroutine());
+    }
+
+    private async Task<int> TestTask()
+    {
+        await Task.Delay(2000);
+        return await Task.Run(() => 
+        {
+            return 10;
+        });
     }
 
     private void GenerateWorld(Vector3Int position)
