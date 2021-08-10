@@ -15,6 +15,7 @@ public class World : MonoBehaviour
     public int chunkDrawingRange = 8;
 
     public GameObject chunkPrefab;
+    public WorldRenderer worldRenderer;
 
     public TerrainGenerator terrainGenerator;
     public Vector2Int mapSeedOffset;
@@ -162,7 +163,9 @@ public class World : MonoBehaviour
     private void CreateChunk(WorldData worldData, Vector3Int position, MeshData meshData)
     {
         GameObject chunkObject = Instantiate(chunkPrefab, position, Quaternion.identity);
-        ChunkRenderer chunkRenderer = chunkObject.GetComponent<ChunkRenderer>();
+        //ChunkRenderer chunkRenderer = chunkObject.GetComponent<ChunkRenderer>();
+
+        ChunkRenderer chunkRenderer = worldRenderer.RenderChunk(worldData, position, meshData);
         worldData.chunkDictionary.Add(position, chunkRenderer);
         chunkRenderer.InitializeChunk(worldData.chunkDataDictionary[position]);
         chunkRenderer.UpdateChunk(meshData);
@@ -218,10 +221,6 @@ public class World : MonoBehaviour
         return (float)pos;
     }
 
-    internal void RemoveChunk(ChunkRenderer chunk)
-    {
-        chunk.gameObject.SetActive(false);
-    }
 
     private WorldGenerationData GetPositionsThatPlayerSees(Vector3Int playerPosition)
     {
@@ -281,11 +280,13 @@ public class World : MonoBehaviour
         public List<Vector3Int> chunkPositionsToUpdate;
     }
 
-    public struct WorldData
-    {
-        public Dictionary<Vector3Int, ChunkData> chunkDataDictionary;
-        public Dictionary<Vector3Int, ChunkRenderer> chunkDictionary;
-        public int chunkSize;
-        public int chunkHeight;
-    }
+    
 }
+public struct WorldData
+{
+    public Dictionary<Vector3Int, ChunkData> chunkDataDictionary;
+    public Dictionary<Vector3Int, ChunkRenderer> chunkDictionary;
+    public int chunkSize;
+    public int chunkHeight;
+}
+
