@@ -162,13 +162,9 @@ public class World : MonoBehaviour
 
     private void CreateChunk(WorldData worldData, Vector3Int position, MeshData meshData)
     {
-        GameObject chunkObject = Instantiate(chunkPrefab, position, Quaternion.identity);
-        //ChunkRenderer chunkRenderer = chunkObject.GetComponent<ChunkRenderer>();
-
         ChunkRenderer chunkRenderer = worldRenderer.RenderChunk(worldData, position, meshData);
         worldData.chunkDictionary.Add(position, chunkRenderer);
-        chunkRenderer.InitializeChunk(worldData.chunkDataDictionary[position]);
-        chunkRenderer.UpdateChunk(meshData);
+
     }
 
     internal bool SetBlock(RaycastHit hit, BlockType blockType)
