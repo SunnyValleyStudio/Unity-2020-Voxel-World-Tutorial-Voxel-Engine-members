@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
@@ -17,6 +18,9 @@ public class World : MonoBehaviour
 
     public TerrainGenerator terrainGenerator;
     public Vector2Int mapSeedOffset;
+
+    CancellationTokenSource taskTokenSource = new CancellationTokenSource();
+
 
     //public Dictionary<Vector3Int, ChunkData> chunkDataDictionary = new Dictionary<Vector3Int, ChunkData>();
     //public Dictionary<Vector3Int, ChunkRenderer> chunkDictionary = new Dictionary<Vector3Int, ChunkRenderer>();
@@ -45,7 +49,7 @@ public class World : MonoBehaviour
     private async Task GenerateWorld(Vector3Int position)
     {
 
-        WorldGenerationData worldGenerationData = await Task.Run(() => GetPositionsThatPlayerSees(position));
+        WorldGenerationData worldGenerationData = await Task.Run(() => GetPositionsThatPlayerSees(position),taskTokenSource.Token);
 
         foreach (Vector3Int pos in worldGenerationData.chunkPositionsToRemove)
         {
@@ -58,8 +62,18 @@ public class World : MonoBehaviour
         }
 
 
-        ConcurrentDictionary<Vector3Int, ChunkData> dataDictionary 
-            = await CalculateWorldChunkData(worldGenerationData.chunkDataPositionsToCreate);
+        ConcurrentDictionary<Vector3Int, ChunkData> dataDictionary = null;
+
+        try
+        {
+            dataDictionary = await CalculateWorldChunkData(worldGenerationData.chunkDataPositionsToCreate);
+        }
+        catch (Exception)
+        {
+            Debug.Log("Task canceled");
+            return;
+        }
+        
 
         foreach (var calculatedData in dataDictionary)
         {
@@ -73,7 +87,15 @@ public class World : MonoBehaviour
             .Select(keyvalpair => keyvalpair.Value)
             .ToList();
 
-        meshDataDictionary = await CreateMeshDataAsync(dataToRender);
+        try
+        {
+            meshDataDictionary = await CreateMeshDataAsync(dataToRender);
+        }
+        catch (Exception)
+        {
+            Debug.Log("Task canceled");
+            return;
+        }
 
         StartCoroutine(ChunkCreationCoroutine(meshDataDictionary));
     }
@@ -86,12 +108,16 @@ public class World : MonoBehaviour
 
             foreach (ChunkData data in dataToRender)
             {
+                if (taskTokenSource.Token.IsCancellationRequested)
+                {
+                    taskTokenSource.Token.ThrowIfCancellationRequested();
+                }
                 MeshData meshData = Chunk.GetChunkMeshData(data);
                 dictionary.TryAdd(data.worldPosition, meshData);
             }
 
             return dictionary;
-        }
+        }, taskTokenSource.Token
         );
     }
 
@@ -103,12 +129,17 @@ public class World : MonoBehaviour
         {
             foreach (Vector3Int pos in chunkDataPositionsToCreate)
             {
+                if (taskTokenSource.Token.IsCancellationRequested)
+                {
+                    taskTokenSource.Token.ThrowIfCancellationRequested();
+                }
                 ChunkData data = new ChunkData(chunkSize, chunkHeight, this, pos);
                 ChunkData newData = terrainGenerator.GenerateChunkData(data, mapSeedOffset);
                 dictionary.TryAdd(pos, newData);
             }
             return dictionary;
-        }
+        },
+        taskTokenSource.Token
         );
         
         
@@ -195,6 +226,7 @@ public class World : MonoBehaviour
     private WorldGenerationData GetPositionsThatPlayerSees(Vector3Int playerPosition)
     {
         List<Vector3Int> allChunkPositionsNeeded = WorldDataHelper.GetChunkPositionsAroundPlayer(this, playerPosition);
+
         List<Vector3Int> allChunkDataPositionsNeeded = WorldDataHelper.GetDataPositionsAroundPlayer(this, playerPosition);
 
         List<Vector3Int> chunkPositionsToCreate = WorldDataHelper.SelectPositonsToCreate(worldData, allChunkPositionsNeeded, playerPosition);
@@ -233,6 +265,11 @@ public class World : MonoBehaviour
             return BlockType.Nothing;
         Vector3Int blockInCHunkCoordinates = Chunk.GetBlockInChunkCoordinates(containerChunk, new Vector3Int(x, y, z));
         return Chunk.GetBlockFromChunkCoordinates(containerChunk, blockInCHunkCoordinates);
+    }
+
+    public void OnDisable()
+    {
+        taskTokenSource.Cancel();
     }
 
     public struct WorldGenerationData
