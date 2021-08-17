@@ -5,13 +5,13 @@ using UnityEngine;
 
 public static class WorldDataHelper
 {
-    public static Vector3Int ChunkPositionFromBlockCoords(World world, Vector3Int position)
+    public static Vector3Int ChunkPositionFromBlockCoords(World world, Vector3Int worldBlockPosition)
     {
         return new Vector3Int
         {
-            x = Mathf.FloorToInt(position.x / (float)world.chunkSize) * world.chunkSize,
-            y = Mathf.FloorToInt(position.y / (float)world.chunkHeight) * world.chunkHeight,
-            z = Mathf.FloorToInt(position.z / (float)world.chunkSize) * world.chunkSize
+            x = Mathf.FloorToInt(worldBlockPosition.x / (float)world.chunkSize) * world.chunkSize,
+            y = Mathf.FloorToInt(worldBlockPosition.y / (float)world.chunkHeight) * world.chunkHeight,
+            z = Mathf.FloorToInt(worldBlockPosition.z / (float)world.chunkSize) * world.chunkSize
         };
     }
 
@@ -99,19 +99,19 @@ public static class WorldDataHelper
         return null;
     }
 
-    internal static void SetBlock(World worldReference, Vector3Int pos, BlockType blockType)
+    internal static void SetBlock(World worldReference, Vector3Int worldBlockPosition, BlockType blockType)
     {
-        ChunkData chunkData = GetChunkData(worldReference, pos);
+        ChunkData chunkData = GetChunkData(worldReference, worldBlockPosition);
         if (chunkData != null)
         {
-            Vector3Int localPosition = Chunk.GetBlockInChunkCoordinates(chunkData, pos);
+            Vector3Int localPosition = Chunk.GetBlockInChunkCoordinates(chunkData, worldBlockPosition);
             Chunk.SetBlock(chunkData, localPosition, blockType);
         }
     }
 
-    public static ChunkData GetChunkData(World worldReference, Vector3Int pos)
+    public static ChunkData GetChunkData(World worldReference, Vector3Int worldBlockPosition)
     {
-        Vector3Int chunkPosition = ChunkPositionFromBlockCoords(worldReference, pos);
+        Vector3Int chunkPosition = ChunkPositionFromBlockCoords(worldReference, worldBlockPosition);
 
         ChunkData containerChunk = null;
 
